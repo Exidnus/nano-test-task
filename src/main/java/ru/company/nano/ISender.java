@@ -2,6 +2,9 @@ package ru.company.nano;
 
 import java.io.Serializable;
 
+/**
+ * Stub for sending messages through network.
+ */
 @FunctionalInterface
 public interface ISender {
     /**

@@ -5,5 +5,10 @@ public interface IBroker {
 
     void unsubscribe(ISubscriber subscriber, String topic);
 
+    /**
+     *
+     * @param msg
+     * @return true if the message was successfully was delivered to all recipients, false otherwise.
+     */
     boolean send(Message msg);
 }

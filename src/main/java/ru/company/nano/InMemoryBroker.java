@@ -68,9 +68,21 @@ public class InMemoryBroker implements IBroker {
                     .get(timeoutMs, TimeUnit.MILLISECONDS);
         } catch (TimeoutException timeout) {
             return false;
+        } catch (InterruptedException ie) {
+            throw new IllegalStateException("Thread was interrupted.", ie);
+        } catch (ExecutionException ee) {
+            throw new IllegalStateException("During sending exception occurred.", ee);
         }
 
         return allResults.stream()
-                .allMatch(Future::get);
+                .allMatch(future -> {
+                    try {
+                        return future.get();
+                    } catch (ExecutionException ee) {
+                        return false;
+                    } catch (InterruptedException ie) {
+                        throw new IllegalStateException("Thread was interrupted.", ie);
+                    }
+                });
     }
 }
