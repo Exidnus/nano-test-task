@@ -5,6 +5,8 @@ public interface IBroker {
 
     void unsubscribe(ISubscriber subscriber, String topic);
 
+    void unsubscribeAll(ISubscriber subscriber);
+
     /**
      *
      * @param msg

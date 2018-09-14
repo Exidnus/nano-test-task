@@ -9,6 +9,10 @@ public class Message {
     private final Collection<String> topics;
     private final Serializable data;
 
+    public Message(String topic, Serializable data) {
+        this(List.of(topic), data);
+    }
+
     public Message(Collection<String> topics, Serializable data) {
         this.topics = Objects.requireNonNull(topics, "Topics can not be null.");
         if (topics.isEmpty()) {

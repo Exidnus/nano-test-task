@@ -15,7 +15,10 @@ public class InMemoryBroker implements IBroker {
     private final ExecutorService pool;
 
     public InMemoryBroker(ISender sender, long timeoutMs, int poolSize) {
-        this.sender = sender;
+        this.sender = Objects.requireNonNull(sender, "Sender can not be null.");
+        if (timeoutMs <= 0) {
+            throw new IllegalArgumentException("Timeout can not be 0 or negative.");
+        }
         this.timeoutMs = timeoutMs;
         this.pool = Executors.newFixedThreadPool(poolSize); //TODO add logging
     }
@@ -47,6 +50,12 @@ public class InMemoryBroker implements IBroker {
         });
     }
 
+    @Override
+    public void unsubscribeAll(ISubscriber subscriber) {
+        topicToSubscribers.values()
+                .forEach(subscribers -> subscribers.remove(subscriber));
+    }
+
     private void check(ISubscriber subscriber, String topic) {
         Objects.requireNonNull(subscriber, "Subscriber can not be null.");
         Objects.requireNonNull(topic, "Topic can not be null.");
@@ -55,13 +64,11 @@ public class InMemoryBroker implements IBroker {
     @Override
     public boolean send(Message msg) {
         Objects.requireNonNull(msg, "Message can not be null.");
-        List<CompletableFuture<Boolean>> allResults = msg.getTopics().stream()
-                .map(topicToSubscribers::get)
-                .filter(Objects::nonNull)
-                .flatMap(Collection::stream)
-                .map(ISubscriber::address)
-                .map(address -> CompletableFuture.supplyAsync(() -> sender.send(address, msg.getData()), pool))
-                .collect(Collectors.toList());
+        List<CompletableFuture<Boolean>> allResults = getAllDeferredResults(msg);
+
+        if (allResults.isEmpty()) {
+            return false;
+        }
 
         try {
             CompletableFuture.allOf(allResults.toArray(new CompletableFuture[0]))
@@ -74,6 +81,20 @@ public class InMemoryBroker implements IBroker {
             throw new IllegalStateException("During sending exception occurred.", ee);
         }
 
+        return checkResults(allResults);
+    }
+
+    private List<CompletableFuture<Boolean>> getAllDeferredResults(Message msg) {
+        return msg.getTopics().stream()
+                .map(topicToSubscribers::get)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .map(ISubscriber::address)
+                .map(address -> CompletableFuture.supplyAsync(() -> sender.send(address, msg.getData()), pool))
+                .collect(Collectors.toList());
+    }
+
+    private boolean checkResults(List<CompletableFuture<Boolean>> allResults) {
         return allResults.stream()
                 .allMatch(future -> {
                     try {
