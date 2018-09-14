@@ -31,14 +31,14 @@ public class InMemoryBroker implements IBroker {
             @Override
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r);
-                thread.setName(String.format("in-memory-broker-sender-thr-%d", counter.getAndDecrement()));
+                thread.setName(String.format("in-memory-broker-sender-thr-%d", counter.getAndIncrement()));
                 return thread;
             }
         });
 
         Executors.newSingleThreadScheduledExecutor(r -> {
             Thread thread = new Thread(r);
-            thread.setName("in-memory-logging-thr-0");
+            thread.setName("in-memory-broker-logging-thr-0");
             thread.setDaemon(true);
             return thread;
         }).scheduleAtFixedRate(() -> {
