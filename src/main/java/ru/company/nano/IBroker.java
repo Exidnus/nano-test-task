@@ -8,9 +8,12 @@ public interface IBroker {
     void unsubscribeAll(ISubscriber subscriber);
 
     /**
-     *
-     * @param msg
      * @return true if the message was successfully was delivered to all recipients, false otherwise.
      */
     boolean send(Message msg);
+
+    /**
+     * Closing all resources, await shutdown pools, etc.
+     */
+    void close();
 }

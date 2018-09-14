@@ -28,4 +28,12 @@ public class Message {
     public Serializable getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "topics=" + topics +
+                ", data=" + data +
+                '}';
+    }
 }
